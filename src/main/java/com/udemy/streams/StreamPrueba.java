@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -64,7 +65,8 @@ public class StreamPrueba {
         System.out.println("*****************Sorted****************");
         setUpUser();
         users.stream()
-            .sorted(Comparator.comparing(User::getNombre))
+            .filter(user -> user.getNombre().startsWith("s"))
+            .sorted(Comparator.comparing(User::getId).reversed())
             .forEach(System.out::println);
         System.out.println("*****************Min y max****************");
         setUpUser();
@@ -130,6 +132,38 @@ public class StreamPrueba {
             .mapToDouble(User::getId)
             .summaryStatistics();
         System.out.println(statistics);
+        System.out.println("++++++++++++++++++++++++++++++++++partition by*************************");
+        setUpUser();
+        List<Integer> numeros = Arrays.asList(1,4,7,5,64,36,7,86,8,5,3,45);
+        Map<Boolean, List<Integer>> esMayor = numeros.stream().collect(Collectors.partitioningBy(e -> e>10));
+        esMayor.get(true).stream().forEach(System.out::println);
+        System.out.println("++++++++++++++++++++++++++++++++++Grouping by*************************");
+        setUpUser();
+        Map<Character, List<User>> alfabetivco = users.stream().collect(Collectors.groupingBy( user -> (user.getNombre().charAt(0))));
+        alfabetivco.get('s').forEach(user -> System.out.println(user.getNombre()));
+        System.out.println("++++++++++++++++++++++++++++++++++Mapping*************************");
+        setUpUser();
+        List<String> personas = users.stream().map(User::getNombre).collect(Collectors.toList());
+        personas.forEach(System.out::println);
+        System.out.println("++++++++++++++++++++++++++++++++++Parallel stream*************************");
+        setUpUser();
+        long tiempo1 = System.currentTimeMillis();
+        users.stream().map(User::getNombre).collect(Collectors.toList()).forEach(StreamPrueba::convertirAMayusculas);
+        long tiempo2 =System.currentTimeMillis();
+        System.out.println("tiempo :: " + (tiempo2 - tiempo1));
+        tiempo1 = System.currentTimeMillis();
+        users.stream().map(User::getNombre).collect(Collectors.toList()).parallelStream().forEach(StreamPrueba::convertirAMayusculas);
+        tiempo2 =System.currentTimeMillis();
+        System.out.println("tiempo paralelo :: " + (tiempo2 - tiempo1));
+    }
+
+    private static String convertirAMayusculas(String nombre){
+        try{
+            Thread.sleep(1000);
+        }catch (InterruptedException e){
+            e.printStackTrace();
+        }
+        return nombre.toUpperCase();
     }
 
     private static void setUpUser() {
@@ -139,7 +173,8 @@ public class StreamPrueba {
             new User(2, "sara"),
             new User(3, "cholo"),
             new User(4, "mica"),
-            new User(5, "saul"));
+            new User(5, "saul"),
+            new User(6, "sara"));
     }
 
     private static void imprimirlista() {
